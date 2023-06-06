@@ -268,7 +268,9 @@ public class SnifferConfigInitializer {
         }
         throw new ConfigNotFoundException("Failed to load agent.config.");
     }
-
+    /**
+     * 根据配置信息重新指定日志解析器 JSON和PATTERN两种日志格式
+     */
     static void configureLogger() {
         switch (Config.Logging.RESOLVER) {
             case JSON:

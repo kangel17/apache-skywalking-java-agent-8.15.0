@@ -1,21 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <checkstyle version="9.3">
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/main/java/org/apache/skywalking/apm/util/ConfigInitializer.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/main/java/org/apache/skywalking/apm/util/StringUtil.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/main/java/org/apache/skywalking/apm/util/Length.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/main/java/org/apache/skywalking/apm/util/PropertyPlaceholderHelper.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/main/java/org/apache/skywalking/apm/util/PlaceholderConfigurerSupport.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/main/java/org/apache/skywalking/apm/util/RunnableWithExceptionProtection.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/test/java/org/apache/skywalking/apm/util/RunnableWithExceptionProtectionTest.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/test/java/org/apache/skywalking/apm/util/ConfigInitializerTest.java">
-</file>
-<file name="/Users/liz17862/myWork/workinfos/coding/codes/openSource/skywalking/apache-skywalking-java-agent-8.15.0/apm-commons/apm-util/src/test/java/org/apache/skywalking/apm/util/StringUtilTest.java">
-</file>
 </checkstyle>

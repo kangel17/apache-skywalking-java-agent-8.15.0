@@ -43,12 +43,19 @@ import org.apache.skywalking.apm.agent.core.plugin.PluginBootstrap;
 
 /**
  * The <code>AgentClassLoader</code> represents a classloader, which is in charge of finding plugins and interceptors.
+ * 自定义类加载器,负责查找插件和拦截器
  */
 public class AgentClassLoader extends ClassLoader {
 
     static {
         /*
          * Try to solve the classloader dead lock. See https://github.com/apache/skywalking/pull/2016
+         * 为了解决 ClassLoader 死锁问题，开启类加载器的并行加载模式
+         *
+         * 将调用该方法的类加载器注册为具备并行能力的
+         * 同时满足以下两个条件时,注册才会成功
+         * 1.调用该方法的类加载器实例还未创建
+         * 2.调用该方法的类加载器所有父类(Object类除外)都注册为具备并行能力的
          */
         registerAsParallelCapable();
     }
