@@ -40,12 +40,20 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * AbstractClassEnhancePluginDefine} list.
  */
 public class PluginFinder {
+    /**
+     * 命名匹配
+     * 为什么这里的Map泛型是<String,LinkedList>
+     * 因为对于同一个类,可能有多个插件都要对它进行字节码增强
+     * key => 目标类
+     * value => 所有可以对这个目标类生效的插件
+     */
     private final Map<String, LinkedList<AbstractClassEnhancePluginDefine>> nameMatchDefine = new HashMap<String, LinkedList<AbstractClassEnhancePluginDefine>>();
     private final List<AbstractClassEnhancePluginDefine> signatureMatchDefine = new ArrayList<AbstractClassEnhancePluginDefine>();
     private final List<AbstractClassEnhancePluginDefine> bootstrapClassMatchDefine = new ArrayList<AbstractClassEnhancePluginDefine>();
     private static boolean IS_PLUGIN_INIT_COMPLETED = false;
 
     public PluginFinder(List<AbstractClassEnhancePluginDefine> plugins) {
+        // 对所加载的所有插件做分类
         for (AbstractClassEnhancePluginDefine plugin : plugins) {
             ClassMatch match = plugin.enhanceClass();
 
@@ -70,14 +78,23 @@ public class PluginFinder {
             }
         }
     }
-
+    /**
+     * 查找所有能够对指定类型生效的插件
+     * 1.从命名插件里找
+     * 2.从间接匹配插件里找
+     *
+     * @param typeDescription 可以看做是class
+     * @return
+     */
     public List<AbstractClassEnhancePluginDefine> find(TypeDescription typeDescription) {
         List<AbstractClassEnhancePluginDefine> matchedPlugins = new LinkedList<AbstractClassEnhancePluginDefine>();
         String typeName = typeDescription.getTypeName();
+        // 1) 从命名插件里找
         if (nameMatchDefine.containsKey(typeName)) {
             matchedPlugins.addAll(nameMatchDefine.get(typeName));
         }
 
+        // 2) 从间接匹配插件里找
         for (AbstractClassEnhancePluginDefine pluginDefine : signatureMatchDefine) {
             IndirectMatch match = (IndirectMatch) pluginDefine.enhanceClass();
             if (match.isMatch(typeDescription)) {
@@ -87,7 +104,11 @@ public class PluginFinder {
 
         return matchedPlugins;
     }
-
+    /**
+     * 将所有插件中匹配类的逻辑做一个聚合
+     *
+     * @return 整个Agent需要拦截的类的所有条件的集合
+     */
     public ElementMatcher<? super TypeDescription> buildMatch() {
         ElementMatcher.Junction judge = new AbstractJunction<NamedElement>() {
             @Override

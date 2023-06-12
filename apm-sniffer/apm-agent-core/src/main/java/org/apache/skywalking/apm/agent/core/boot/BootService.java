@@ -23,15 +23,32 @@ package org.apache.skywalking.apm.agent.core.boot;
  * {@link #boot()} will be called when <code>BootService</code> start up.
  */
 public interface BootService {
+    /**
+     * 准备阶段
+     * @throws Throwable
+     */
     void prepare() throws Throwable;
 
+    /**
+     * 启动阶段
+     * @throws Throwable
+     */
     void boot() throws Throwable;
 
+    /**
+     * 启动完成阶段
+     * @throws Throwable
+     */
     void onComplete() throws Throwable;
 
+    /**
+     * 关闭阶段
+     * @throws Throwable
+     */
     void shutdown() throws Throwable;
 
     /**
+     * 指定服务的优先级，优先级高的服务先启动
      * {@code BootService}s with higher priorities will be started earlier, and shut down later than those {@code BootService}s with lower priorities.
      *
      * @return the priority of this {@code BootService}.

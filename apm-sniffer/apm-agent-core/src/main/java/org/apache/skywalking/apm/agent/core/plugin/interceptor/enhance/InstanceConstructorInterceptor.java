@@ -26,6 +26,7 @@ package org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance;
 public interface InstanceConstructorInterceptor {
     /**
      * Called after the origin constructor invocation.
+     * 在原生构造器执行之后再执行
      */
     void onConstruct(EnhancedInstance objInst, Object[] allArguments) throws Throwable;
 }

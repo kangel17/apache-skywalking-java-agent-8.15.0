@@ -32,7 +32,9 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
-
+/**
+ * 插件的定义,继承xxxPluginDefine,通常命名为xxxInstrumentation
+ */
 public class DubboInstrumentation extends ClassInstanceMethodsEnhancePluginDefine {
 
     public static final String ENHANCE_CLASS = "org.apache.dubbo.monitor.support.MonitorFilter";
@@ -47,30 +49,46 @@ public class DubboInstrumentation extends ClassInstanceMethodsEnhancePluginDefin
 
     public static final String CONTEXT_ATTACHMENT_TYPE_NAME = "org.apache.dubbo.rpc.RpcContextAttachment";
 
+    /**
+     * 指定插件增强哪个类的字节码
+     */
     @Override
     protected ClassMatch enhanceClass() {
         return NameMatch.byName(ENHANCE_CLASS);
     }
 
+    /**
+     * 拿到构造方法的拦截点
+     */
     @Override
     public ConstructorInterceptPoint[] getConstructorsInterceptPoints() {
         return null;
     }
 
+    /**
+     * 拿到构造方法的拦截点
+     */
     @Override
     public InstanceMethodsInterceptPoint[] getInstanceMethodsInterceptPoints() {
         return new InstanceMethodsInterceptPoint[] {
             new InstanceMethodsInterceptPoint() {
+                /**
+                 * 该插件增强的是MonitorFilter的invoke()方法
+                 */
                 @Override
                 public ElementMatcher<MethodDescription> getMethodsMatcher() {
                     return named(INTERCEPT_POINT_METHOD);
                 }
-
+                /**
+                 * 交给DubboInterceptor进行字节码增强
+                 */
                 @Override
                 public String getMethodsInterceptor() {
                     return INTERCEPT_CLASS;
                 }
-
+                /**
+                 * 在字节码增强的过程中,是否要对原方法的入参进行改变
+                 */
                 @Override
                 public boolean isOverrideArgs() {
                     return false;

@@ -49,6 +49,10 @@ public abstract class AbstractClassEnhancePluginDefine {
     public static final String CONTEXT_ATTR_NAME = "_$EnhancedClassField_ws";
 
     /**
+     * witness机制校验当前插件是否可用
+     * 调用enhance()方法进行字节码增强流程
+     * 将记录状态的上下文EnhanceContext设置为已增强
+     *
      * Main entrance of enhancing the class.
      *
      * @param typeDescription target class description.
@@ -59,7 +63,9 @@ public abstract class AbstractClassEnhancePluginDefine {
      */
     public DynamicType.Builder<?> define(TypeDescription typeDescription, DynamicType.Builder<?> builder,
         ClassLoader classLoader, EnhanceContext context) throws PluginException {
+        // 当前插件的全类名
         String interceptorDefineClassName = this.getClass().getName();
+        // 当前被拦截到的类的全类名
         String transformClassName = typeDescription.getTypeName();
         if (StringUtil.isEmpty(transformClassName)) {
             LOGGER.warn("classname of being intercepted is not defined by {}.", interceptorDefineClassName);
@@ -67,6 +73,7 @@ public abstract class AbstractClassEnhancePluginDefine {
         }
 
         LOGGER.debug("prepare to enhance class {} by {}.", transformClassName, interceptorDefineClassName);
+        // witness机制校验当前插件是否可用
         WitnessFinder finder = WitnessFinder.INSTANCE;
         /**
          * find witness classes for enhance class
@@ -74,6 +81,7 @@ public abstract class AbstractClassEnhancePluginDefine {
         String[] witnessClasses = witnessClasses();
         if (witnessClasses != null) {
             for (String witnessClass : witnessClasses) {
+                // 代码1)判断 witnessClass 是否存在
                 if (!finder.exist(witnessClass, classLoader)) {
                     LOGGER.warn("enhance class {} by plugin {} is not activated. Witness class {} does not exist.", transformClassName, interceptorDefineClassName, witnessClass);
                     return null;
@@ -83,6 +91,7 @@ public abstract class AbstractClassEnhancePluginDefine {
         List<WitnessMethod> witnessMethods = witnessMethods();
         if (!CollectionUtil.isEmpty(witnessMethods)) {
             for (WitnessMethod witnessMethod : witnessMethods) {
+                // 代码2)判断 witnessMethod 是否存在
                 if (!finder.exist(witnessMethod, classLoader)) {
                     LOGGER.warn("enhance class {} by plugin {} is not activated. Witness method {} does not exist.", transformClassName, interceptorDefineClassName, witnessMethod);
                     return null;
@@ -91,10 +100,12 @@ public abstract class AbstractClassEnhancePluginDefine {
         }
 
         /**
+         * 字节码增强流程
          * find origin class source code for interceptor
          */
         DynamicType.Builder<?> newClassBuilder = this.enhance(typeDescription, builder, classLoader, context);
 
+        // 将记录状态的上下文EnhanceContext设置为已增强
         context.initializationStageCompleted();
         LOGGER.debug("enhance class {} by {} completely.", transformClassName, interceptorDefineClassName);
 
@@ -110,8 +121,9 @@ public abstract class AbstractClassEnhancePluginDefine {
      */
     protected DynamicType.Builder<?> enhance(TypeDescription typeDescription, DynamicType.Builder<?> newClassBuilder,
                                              ClassLoader classLoader, EnhanceContext context) throws PluginException {
+        // 静态方法插桩
         newClassBuilder = this.enhanceClass(typeDescription, newClassBuilder, classLoader);
-
+        // 构造器和实例方法插桩
         newClassBuilder = this.enhanceInstance(typeDescription, newClassBuilder, classLoader, context);
 
         return newClassBuilder;
@@ -129,6 +141,9 @@ public abstract class AbstractClassEnhancePluginDefine {
                                                      EnhanceContext context) throws PluginException;
 
     /**
+     * 静态方法插桩
+     * 1、获取静态方法拦截点
+     * 2、根据是否要修改原方法入参和是否为JDK类库的类走不通的分支处理逻辑
      * Enhance a class to intercept class static methods.
      *
      * @param typeDescription target class description
@@ -187,6 +202,7 @@ public abstract class AbstractClassEnhancePluginDefine {
     public abstract InstanceMethodsInterceptV2Point[] getInstanceMethodsInterceptV2Points();
 
     /**
+     * 获取静态方法拦截点
      * Static methods intercept point. See {@link StaticMethodsInterceptPoint}
      *
      * @return collections of {@link StaticMethodsInterceptPoint}

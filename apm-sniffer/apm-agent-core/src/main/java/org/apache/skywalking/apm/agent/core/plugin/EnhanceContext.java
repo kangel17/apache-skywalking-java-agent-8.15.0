@@ -21,14 +21,19 @@ package org.apache.skywalking.apm.agent.core.plugin;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.ClassEnhancePluginDefine;
 
 /**
+ * 状态记录类，记录当前被拦截到的类，是否被改了字节码 或 是否新增了新的字段或接口
  * The <code>EnhanceContext</code> represents the context or status for processing a class.
  * <p>
  * Based on this context, the plugin core {@link ClassEnhancePluginDefine} knows how to process the specific steps for
  * every particular plugin.
  */
 public class EnhanceContext {
+    /**
+     * 是否被增强
+     */
     private boolean isEnhanced = false;
     /**
+     * 是否新增了新的字段或者实现了新的接口
      * The object has already been enhanced or extended. e.g. added the new field, or implemented the new interface
      */
     private boolean objectExtended = false;

@@ -29,6 +29,7 @@ import org.apache.skywalking.apm.agent.core.logging.api.ILog;
 import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 
 /**
+ * 不修改原方法入参
  * The actual byte-buddy's interceptor to intercept class static methods. In this class, it provides a bridge between
  * byte-buddy and sky-walking plugin.
  */
@@ -52,12 +53,17 @@ public class StaticMethodsInter {
     }
 
     /**
+     * 1、实例化自定义的拦截器
+     * 2、执行beforeMethod()方法
+     * 3、如果需要执行原方法，执行原方法调用，否则调用_ret()方法
+     * 4、如果方法执行抛出异常，调用handleMethodException()方法
+     * 5、最终调用finally中afterMethod()方法
      * Intercept the target static method.
      *
-     * @param clazz        target class
-     * @param allArguments all method arguments
-     * @param method       method description.
-     * @param zuper        the origin call ref.
+     * @param clazz        target class 要修改字节码的目标类
+     * @param allArguments all method arguments 原方法所有的入参
+     * @param method       method description.  原方法
+     * @param zuper        the origin call ref. 原方法的调用 zuper.call()代表调用原方法
      * @return the return value of target static method.
      * @throws Exception only throw exception because of zuper.call() or unexpected exception in sky-walking ( This is a
      *                   bug, if anything triggers this condition ).
@@ -65,6 +71,7 @@ public class StaticMethodsInter {
     @RuntimeType
     public Object intercept(@Origin Class<?> clazz, @AllArguments Object[] allArguments, @Origin Method method,
         @SuperCall Callable<?> zuper) throws Throwable {
+        // 实例化自定义的拦截器
         StaticMethodsAroundInterceptor interceptor = InterceptorInstanceLoader.load(staticMethodsAroundInterceptorClassName, clazz
             .getClassLoader());
 
@@ -77,9 +84,11 @@ public class StaticMethodsInter {
 
         Object ret = null;
         try {
+            // 是否执行原方法
             if (!result.isContinue()) {
                 ret = result._ret();
             } else {
+                // 原方法的调用
                 ret = zuper.call();
             }
         } catch (Throwable t) {

@@ -29,7 +29,10 @@ import java.util.Map;
  */
 public enum WitnessFinder {
     INSTANCE;
-
+    /**
+     * key:ClassLoader
+     * value:这个ClassLoader的类型池，也就是这个ClassLoader所有能加载的类
+     */
     private final Map<ClassLoader, TypePool> poolMap = new HashMap<ClassLoader, TypePool>();
 
     /**
@@ -52,12 +55,14 @@ public enum WitnessFinder {
         if (!poolMap.containsKey(mappingKey)) {
             synchronized (poolMap) {
                 if (!poolMap.containsKey(mappingKey)) {
+                    // classLoader == null，基于classLoader构造TypePool，否则基于自身的classLoader构造TypePool
                     TypePool classTypePool = classLoader == null ? TypePool.Default.ofBootLoader() : TypePool.Default.of(classLoader);
                     poolMap.put(mappingKey, classTypePool);
                 }
             }
         }
         TypePool typePool = poolMap.get(mappingKey);
+        // 判断传入的类是否存在
         return typePool.describe(witnessClass);
     }
 
@@ -66,10 +71,12 @@ public enum WitnessFinder {
      * @return true, if the given witness method exists, through the given classLoader.
      */
     public boolean exist(WitnessMethod witnessMethod, ClassLoader classLoader) {
+        // 先判断该方法所在的类是否在这个ClassLoader中（走witnessClass校验的流程），再判断该方法是否存在
         TypePool.Resolution resolution = getResolution(witnessMethod.getDeclaringClassName(), classLoader);
         if (!resolution.isResolved()) {
             return false;
         }
+        // 判断该方法是否存在
         return !resolution.resolve()
                 .getDeclaredMethods()
                 .filter(witnessMethod.getElementMatcher())

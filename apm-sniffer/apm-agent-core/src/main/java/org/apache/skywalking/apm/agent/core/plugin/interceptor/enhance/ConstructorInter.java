@@ -27,6 +27,9 @@ import org.apache.skywalking.apm.agent.core.plugin.loader.InterceptorInstanceLoa
 import org.apache.skywalking.apm.agent.core.logging.api.ILog;
 
 /**
+ * 构造器插桩
+ * 1、构造函数中实例化自定义的拦截器
+ * 2、intercept()方法中调用拦截器的onConstruct()方法（在原生构造器执行之后再执行后）
  * The actual byte-buddy's interceptor to intercept constructor methods. In this class, it provides a bridge between
  * byte-buddy and sky-walking plugin.
  */
@@ -45,6 +48,7 @@ public class ConstructorInter {
      */
     public ConstructorInter(String constructorInterceptorClassName, ClassLoader classLoader) throws PluginException {
         try {
+            // 实例化自定义的拦截器
             interceptor = InterceptorInstanceLoader.load(constructorInterceptorClassName, classLoader);
         } catch (Throwable t) {
             throw new PluginException("Can't create InstanceConstructorInterceptorV2.", t);
@@ -61,7 +65,9 @@ public class ConstructorInter {
     public void intercept(@This Object obj, @AllArguments Object[] allArguments) {
         try {
             EnhancedInstance targetObject = (EnhancedInstance) obj;
-
+            // 在原生构造器执行之后再执行后调用onConstruct()方法
+            // 只能访问到EnhancedInstance类型的字段 _$EnhancedClassField_ws
+            // 拦截器的onConstruct把某些数据存储到_$EnhancedClassField_ws字段中
             interceptor.onConstruct(targetObject, allArguments);
         } catch (Throwable t) {
             LOGGER.error("ConstructorInter failure.", t);

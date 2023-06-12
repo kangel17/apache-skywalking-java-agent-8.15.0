@@ -86,6 +86,7 @@ public class BootstrapInstrumentBoost {
 
     public static AgentBuilder inject(PluginFinder pluginFinder, Instrumentation instrumentation,
         AgentBuilder agentBuilder, JDK9ModuleExporter.EdgeClasses edgeClasses) throws PluginException {
+        // 所有要注入到Bootstrap ClassLoader里的类
         Map<String, byte[]> classesTypeMap = new LinkedHashMap<>();
 
         if (!prepareJREInstrumentation(pluginFinder, classesTypeMap)) {
@@ -111,6 +112,7 @@ public class BootstrapInstrumentBoost {
         }
 
         /**
+         * 将这些类注入到Bootstrap ClassLoader
          * Inject the classes into bootstrap class loader by using Unsafe Strategy.
          * ByteBuddy adapts the sun.misc.Unsafe and jdk.internal.misc.Unsafe automatically.
          */

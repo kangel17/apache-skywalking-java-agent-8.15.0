@@ -27,5 +27,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 public interface IndirectMatch extends ClassMatch {
     ElementMatcher.Junction buildJunction();
 
+    // TypeDescription就是对类的描述,可以当做Class
     boolean isMatch(TypeDescription typeDescription);
 }

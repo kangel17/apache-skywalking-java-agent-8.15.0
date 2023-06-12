@@ -97,8 +97,9 @@ public class SkyWalkingAgent {
             return;
         }
         // 3.定制化Agent行为
+        // 创建 ByteBuddy 实例
         final ByteBuddy byteBuddy = new ByteBuddy().with(TypeValidation.of(Config.Agent.IS_OPEN_DEBUGGING_CLASS));
-
+        // 指定 ByteBuddy 要忽略的类
         AgentBuilder agentBuilder = new AgentBuilder.Default(byteBuddy).ignore(
             nameStartsWith("net.bytebuddy.")
                 .or(nameStartsWith("org.slf4j."))
@@ -109,7 +110,7 @@ public class SkyWalkingAgent {
                 .or(nameStartsWith("sun.reflect"))
                 .or(allSkyWalkingAgentExcludeToolkit())
                 .or(ElementMatchers.isSynthetic()));
-
+        // 1)将必要的类注入到Bootstrap ClassLoader
         JDK9ModuleExporter.EdgeClasses edgeClasses = new JDK9ModuleExporter.EdgeClasses();
         try {
             agentBuilder = BootstrapInstrumentBoost.inject(pluginFinder, instrumentation, agentBuilder, edgeClasses);
@@ -117,14 +118,14 @@ public class SkyWalkingAgent {
             LOGGER.error(e, "SkyWalking agent inject bootstrap instrumentation failure. Shutting down.");
             return;
         }
-
+        // 解决JDK模块系统的跨模块类访问
         try {
             agentBuilder = JDK9ModuleExporter.openReadEdge(instrumentation, agentBuilder, edgeClasses);
         } catch (Exception e) {
             LOGGER.error(e, "SkyWalking agent open read edge in JDK 9+ failure. Shutting down.");
             return;
         }
-
+        // 将修改后的字节码保存到磁盘/内存上
         if (Config.Agent.IS_CACHE_ENHANCED_CLASS) {
             try {
                 agentBuilder = agentBuilder.with(new CacheableTransformerDecorator(Config.Agent.CLASS_CACHE_MODE));
@@ -134,9 +135,9 @@ public class SkyWalkingAgent {
             }
         }
 
-        agentBuilder.type(pluginFinder.buildMatch())
+        agentBuilder.type(pluginFinder.buildMatch())    // 指定ByteBuddy要拦截的类
                     .transform(new Transformer(pluginFinder))
-                    .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                    .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)   // redefine和retransform的区别在于是否保留修改前的内容
                     .with(new RedefinitionListener())
                     .with(new Listener())
                     .installOn(instrumentation);
@@ -161,6 +162,11 @@ public class SkyWalkingAgent {
             this.pluginFinder = pluginFinder;
         }
 
+        /**
+         * 1、查找所有能够对当前被拦截到的类生效的插件
+         * 2、如果有生效的插件，调用每个插件的define()方法去做字节码增强，返回被所有可用插件修改完之后的最终字节码
+         * 3、如果没有生效的插件，返回被拦截到的类的原生字节码
+         */
         @Override
         public DynamicType.Builder<?> transform(final DynamicType.Builder<?> builder,
                                                 final TypeDescription typeDescription,
@@ -168,11 +174,14 @@ public class SkyWalkingAgent {
                                                 final JavaModule javaModule,
                                                 final ProtectionDomain protectionDomain) {
             LoadedLibraryCollector.registerURLClassLoader(classLoader);
+            // 1)查找所有能够对当前被拦截到的类生效的插件
             List<AbstractClassEnhancePluginDefine> pluginDefines = pluginFinder.find(typeDescription);
             if (pluginDefines.size() > 0) {
                 DynamicType.Builder<?> newBuilder = builder;
+                // 2)增强上下文
                 EnhanceContext context = new EnhanceContext();
                 for (AbstractClassEnhancePluginDefine define : pluginDefines) {
+                    // 3)调用每个插件的define()方法去做字节码增强
                     DynamicType.Builder<?> possibleNewBuilder = define.define(
                         typeDescription, newBuilder, classLoader, context);
                     if (possibleNewBuilder != null) {
@@ -182,12 +191,12 @@ public class SkyWalkingAgent {
                 if (context.isEnhanced()) {
                     LOGGER.debug("Finish the prepare stage for {}.", typeDescription.getName());
                 }
-
+                // 被所有可用插件修改完之后的最终字节码
                 return newBuilder;
             }
 
             LOGGER.debug("Matched class {}, but ignore by finding mechanism.", typeDescription.getTypeName());
-            return builder;
+            return builder; // 被拦截到的类的原生字节码
         }
     }
 

@@ -57,6 +57,9 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
     private static final ILog LOGGER = LogManager.getLogger(ClassEnhancePluginDefine.class);
 
     /**
+     * 1、如果当前拦截的类没有实现EnhancedInstance接口且没有新增新的字段或者实现新的接口，则会新增一个private volatile的Object类型字段_$EnhancedClassField_ws，并实现EnhancedInstance接口的get/set作为新增字段的get/set方法，最后设置标记位，保证该操作只会发生一次
+     * 2、增强构造器
+     * 3、增强实例方法
      * Enhance a class to intercept constructors and class instance methods.
      *
      * @param typeDescription target class description
@@ -67,7 +70,9 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
     protected DynamicType.Builder<?> enhanceInstance(TypeDescription typeDescription,
         DynamicType.Builder<?> newClassBuilder, ClassLoader classLoader,
         EnhanceContext context) throws PluginException {
+        // 构造器拦截点
         ConstructorInterceptPoint[] constructorInterceptPoints = getConstructorsInterceptPoints();
+        // 实例方法拦截点
         InstanceMethodsInterceptPoint[] instanceMethodsInterceptPoints = getInstanceMethodsInterceptPoints();
         String enhanceOriginClassName = typeDescription.getTypeName();
         boolean existedConstructorInterceptPoint = false;
@@ -94,30 +99,39 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
          * 2.Add a field accessor for this field.
          *
          * And make sure the source codes manipulation only occurs once.
-         *
+         * 这个操作只会发生一次
          */
+        // 如果当前拦截的类没有实现EnhancedInstance接口
         if (!typeDescription.isAssignableTo(EnhancedInstance.class)) {
+            // 没有新增新的字段或者实现新的接口
             if (!context.isObjectExtended()) {
+                // 新增一个private volatile的Object类型字段 _$EnhancedClassField_ws
+                // 实现EnhancedInstance接口的get/set作为新增字段的get/set方法
+                // 插件中的构造器插桩是为了在_$EnhancedClassField_ws字段中保存一些数据方便后续使用
                 newClassBuilder = newClassBuilder.defineField(
                     CONTEXT_ATTR_NAME, Object.class, ACC_PRIVATE | ACC_VOLATILE)
                                                  .implement(EnhancedInstance.class)
                                                  .intercept(FieldAccessor.ofField(CONTEXT_ATTR_NAME));
+                // 将记录状态的上下文EnhanceContext设置为已新增新的字段或者实现新的接口
                 context.extendObjectCompleted();
             }
         }
 
         /**
          * 2. enhance constructors
+         * 增强构造器
          */
         if (existedConstructorInterceptPoint) {
             for (ConstructorInterceptPoint constructorInterceptPoint : constructorInterceptPoints) {
                 if (isBootstrapInstrumentation()) {
+                    // 是 JDK 类库的类
                     newClassBuilder = newClassBuilder.constructor(constructorInterceptPoint.getConstructorMatcher())
                                                      .intercept(SuperMethodCall.INSTANCE.andThen(MethodDelegation.withDefaultConfiguration()
                                                                                                                  .to(BootstrapInstrumentBoost
                                                                                                                      .forInternalDelegateClass(constructorInterceptPoint
                                                                                                                          .getConstructorInterceptor()))));
                 } else {
+                    // 不是 JDK 类库的类
                     newClassBuilder = newClassBuilder.constructor(constructorInterceptPoint.getConstructorMatcher())
                                                      .intercept(SuperMethodCall.INSTANCE.andThen(MethodDelegation.withDefaultConfiguration()
                                                                                                                  .to(new ConstructorInter(constructorInterceptPoint
@@ -128,6 +142,7 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
 
         /**
          * 3. enhance instance methods
+         * 增强实例方法
          */
         if (existedMethodsInterceptPoints) {
             for (InstanceMethodsInterceptPoint instanceMethodsInterceptPoint : instanceMethodsInterceptPoints) {
@@ -136,16 +151,21 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
                     throw new EnhanceException("no InstanceMethodsAroundInterceptor define to enhance class " + enhanceOriginClassName);
                 }
                 ElementMatcher.Junction<MethodDescription> junction = not(isStatic()).and(instanceMethodsInterceptPoint.getMethodsMatcher());
+                // 1)如果拦截点为DeclaredInstanceMethodsInterceptPoint
                 if (instanceMethodsInterceptPoint instanceof DeclaredInstanceMethodsInterceptPoint) {
+                    // 拿到的方法必须是当前类上的 通过注解匹配可能匹配到很多方法不是当前类上的
                     junction = junction.and(ElementMatchers.<MethodDescription>isDeclaredBy(typeDescription));
                 }
                 if (instanceMethodsInterceptPoint.isOverrideArgs()) {
                     if (isBootstrapInstrumentation()) {
+                        // 是 JDK 类库的类
                         newClassBuilder = newClassBuilder.method(junction)
                                                          .intercept(MethodDelegation.withDefaultConfiguration()
                                                                                     .withBinders(Morph.Binder.install(OverrideCallable.class))
                                                                                     .to(BootstrapInstrumentBoost.forInternalDelegateClass(interceptor)));
                     } else {
+                        // 不是 JDK 类库的类
+                        // 实例方法插桩修改原方法入参会交给InstMethodsInterWithOverrideArgs去处理
                         newClassBuilder = newClassBuilder.method(junction)
                                                          .intercept(MethodDelegation.withDefaultConfiguration()
                                                                                     .withBinders(Morph.Binder.install(OverrideCallable.class))
@@ -153,10 +173,13 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
                     }
                 } else {
                     if (isBootstrapInstrumentation()) {
+                        // 是 JDK 类库的类
                         newClassBuilder = newClassBuilder.method(junction)
                                                          .intercept(MethodDelegation.withDefaultConfiguration()
                                                                                     .to(BootstrapInstrumentBoost.forInternalDelegateClass(interceptor)));
                     } else {
+                        // 不是 JDK 类库的类
+                        // 实例方法插桩不修改原方法入参会交给InstMethodsInter去处理
                         newClassBuilder = newClassBuilder.method(junction)
                                                          .intercept(MethodDelegation.withDefaultConfiguration()
                                                                                     .to(new InstMethodsInter(interceptor, classLoader)));
@@ -178,6 +201,7 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
     @Override
     protected DynamicType.Builder<?> enhanceClass(TypeDescription typeDescription, DynamicType.Builder<?> newClassBuilder,
         ClassLoader classLoader) throws PluginException {
+        // 获取静态方法拦截点
         StaticMethodsInterceptPoint[] staticMethodsInterceptPoints = getStaticMethodsInterceptPoints();
         String enhanceOriginClassName = typeDescription.getTypeName();
         if (staticMethodsInterceptPoints == null || staticMethodsInterceptPoints.length == 0) {
@@ -189,8 +213,9 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
             if (StringUtil.isEmpty(interceptor)) {
                 throw new EnhanceException("no StaticMethodsAroundInterceptor define to enhance class " + enhanceOriginClassName);
             }
-
+            // 是否要修改原方法入参
             if (staticMethodsInterceptPoint.isOverrideArgs()) {
+                // 是否为JDK类库的类 被BootstrapClassLoader加载
                 if (isBootstrapInstrumentation()) {
                     newClassBuilder = newClassBuilder.method(isStatic().and(staticMethodsInterceptPoint.getMethodsMatcher()))
                                                      .intercept(MethodDelegation.withDefaultConfiguration()
@@ -208,6 +233,7 @@ public abstract class ClassEnhancePluginDefine extends AbstractClassEnhancePlugi
                                                      .intercept(MethodDelegation.withDefaultConfiguration()
                                                                                 .to(BootstrapInstrumentBoost.forInternalDelegateClass(interceptor)));
                 } else {
+                    // 不需要修改原方法入参，并且拦截的类不是JDK类库的类
                     newClassBuilder = newClassBuilder.method(isStatic().and(staticMethodsInterceptPoint.getMethodsMatcher()))
                                                      .intercept(MethodDelegation.withDefaultConfiguration()
                                                                                 .to(new StaticMethodsInter(interceptor)));
