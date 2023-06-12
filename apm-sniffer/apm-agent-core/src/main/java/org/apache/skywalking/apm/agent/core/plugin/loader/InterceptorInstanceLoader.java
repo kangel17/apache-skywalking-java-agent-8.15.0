@@ -46,8 +46,8 @@ public class InterceptorInstanceLoader {
      * Load an instance of interceptor, and keep it singleton. Create {@link AgentClassLoader} for each
      * targetClassLoader, as an extend classloader. It can load interceptor classes from plugins, activations folders.
      *
-     * @param className         the interceptor class, which is expected to be found
-     * @param targetClassLoader the class loader for current application context
+     * @param className         the interceptor class, which is expected to be found    插件拦截器全类名
+     * @param targetClassLoader the class loader for current application context    当前应用上下文的类加载器
      * @param <T>               expected type
      * @return the type reference.
      */
@@ -56,9 +56,11 @@ public class InterceptorInstanceLoader {
         if (targetClassLoader == null) {
             targetClassLoader = InterceptorInstanceLoader.class.getClassLoader();
         }
+        // org.example.Hello_OF_org.example.classloader.MyClassLoader@xxxxx
         String instanceKey = className + "_OF_" + targetClassLoader.getClass()
                                                                    .getName() + "@" + Integer.toHexString(targetClassLoader
             .hashCode());
+        // className所代表的拦截器的实例 对于同一个classloader而言相同的类只加载一次
         Object inst = INSTANCE_CACHE.get(instanceKey);
         if (inst == null) {
             INSTANCE_LOAD_LOCK.lock();
@@ -66,12 +68,14 @@ public class InterceptorInstanceLoader {
             try {
                 pluginLoader = EXTEND_PLUGIN_CLASSLOADERS.get(targetClassLoader);
                 if (pluginLoader == null) {
+                    // targetClassLoader作为AgentClassLoader的父类加载器
                     pluginLoader = new AgentClassLoader(targetClassLoader);
                     EXTEND_PLUGIN_CLASSLOADERS.put(targetClassLoader, pluginLoader);
                 }
             } finally {
                 INSTANCE_LOAD_LOCK.unlock();
             }
+            // 通过pluginLoader来实例化拦截器对象
             inst = Class.forName(className, true, pluginLoader).newInstance();
             if (inst != null) {
                 INSTANCE_CACHE.put(instanceKey, inst);

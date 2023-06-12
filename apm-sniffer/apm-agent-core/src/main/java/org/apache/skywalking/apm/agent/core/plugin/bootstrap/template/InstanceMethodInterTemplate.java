@@ -40,6 +40,7 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInt
  * -------------------------------
  * <p>
  * This class wouldn't be loaded in real env. This is a class template for dynamic class generation.
+ * 在真实环境下这个类是不会被加载的,这是一个类模板用于动态类生成
  */
 public class InstanceMethodInterTemplate {
     /**
@@ -114,6 +115,11 @@ public class InstanceMethodInterTemplate {
 
     /**
      * Prepare the context. Link to the agent core in AppClassLoader.
+     * 1.打通BootstrapClassLoader和AgentClassLoader
+     * 通过AgentClassLoader加载，拿到ILog生成日志对象
+     * 通过AgentClassLoader加载，拿到插件自定义的拦截器实例
+     * 2.代替非JDK核心类库插件运行逻辑里的
+     * InterceptorInstanceLoader.load(instanceMethodsAroundInterceptorClassName, classLoader)
      */
     private static void prepare() {
         if (INTERCEPTOR == null) {
