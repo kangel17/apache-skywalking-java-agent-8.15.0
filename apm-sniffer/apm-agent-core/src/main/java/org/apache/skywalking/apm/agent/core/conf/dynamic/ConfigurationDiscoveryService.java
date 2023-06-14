@@ -61,9 +61,9 @@ public class ConfigurationDiscoveryService implements BootService, GRPCChannelLi
      * UUID of the last return value.
      */
     private String uuid;
-    private final Register register = new Register();
+    private final Register register = new Register(); // 所有的监听配置
 
-    private volatile int lastRegisterWatcherSize;
+    private volatile int lastRegisterWatcherSize; // 上一次计算的 watcher 的数量
 
     private volatile ScheduledFuture<?> getDynamicConfigurationFuture;
     private volatile GRPCChannelStatus status = GRPCChannelStatus.DISCONNECT;
@@ -144,7 +144,9 @@ public class ConfigurationDiscoveryService implements BootService, GRPCChannelLi
         if (responseUuid != null && Objects.equals(this.uuid, responseUuid)) {
             return;
         }
-
+        // ConfigurationDiscoveryCommand 可能返回了 10个配置变更
+        // 但是 Register 里面只有 5个配置项的监听器
+        // 这里就需要过滤出有监听器的配置项
         List<KeyStringValuePair> config = readConfig(configurationDiscoveryCommand);
 
         config.forEach(property -> {
@@ -154,6 +156,7 @@ public class ConfigurationDiscoveryService implements BootService, GRPCChannelLi
                 if (holder != null) {
                     AgentConfigChangeWatcher watcher = holder.getWatcher();
                     String newPropertyValue = property.getValue();
+                    // 新值为 blank
                     if (StringUtil.isBlank(newPropertyValue)) {
                         if (watcher.value() != null) {
                             // Notify watcher, the new value is null with delete event type.
@@ -165,6 +168,7 @@ public class ConfigurationDiscoveryService implements BootService, GRPCChannelLi
                             // Don't need to notify, stay in null.
                         }
                     } else {
+                        // 值有变化
                         if (!newPropertyValue.equals(watcher.value())) {
                             watcher.notify(new AgentConfigChangeWatcher.ConfigChangeEvent(
                                     newPropertyValue, AgentConfigChangeWatcher.EventType.MODIFY
@@ -191,6 +195,7 @@ public class ConfigurationDiscoveryService implements BootService, GRPCChannelLi
      * @return Adapted dynamic configuration information
      */
     private List<KeyStringValuePair> readConfig(ConfigurationDiscoveryCommand configurationDiscoveryCommand) {
+        // List => Map
         Map<String, KeyStringValuePair> commandConfigs = configurationDiscoveryCommand.getConfig()
                                                                                       .stream()
                                                                                       .collect(Collectors.toMap(

@@ -36,13 +36,13 @@ public enum MemoryProvider {
     public List<Memory> getMemoryMetricList() {
         List<Memory> memoryList = new LinkedList<Memory>();
 
-        MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
+        MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage(); // 堆
         Memory.Builder heapMemoryBuilder = Memory.newBuilder();
         heapMemoryBuilder.setIsHeap(true);
-        heapMemoryBuilder.setInit(heapMemoryUsage.getInit());
-        heapMemoryBuilder.setUsed(heapMemoryUsage.getUsed());
-        heapMemoryBuilder.setCommitted(heapMemoryUsage.getCommitted());
-        heapMemoryBuilder.setMax(heapMemoryUsage.getMax());
+        heapMemoryBuilder.setInit(heapMemoryUsage.getInit()); // 启动时向 OS 申请的要用的内存大小 -Xms
+        heapMemoryBuilder.setUsed(heapMemoryUsage.getUsed()); // 实际已使用的内存
+        heapMemoryBuilder.setCommitted(heapMemoryUsage.getCommitted()); // OS 实际已经分配给当前 Java 进程的内存
+        heapMemoryBuilder.setMax(heapMemoryUsage.getMax()); // 最大可向 OS 申请的内存 -Xmx
         memoryList.add(heapMemoryBuilder.build());
 
         MemoryUsage nonHeapMemoryUsage = memoryMXBean.getNonHeapMemoryUsage();

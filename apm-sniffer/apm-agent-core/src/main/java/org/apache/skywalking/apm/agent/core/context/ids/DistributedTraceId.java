@@ -30,6 +30,7 @@ import lombok.ToString;
  * <p>
  * such as: Service : http://www.skywalking.com/cust/query, all the remote, called behind this service, rest remote, db
  * executions, are using the same <code>DistributedTraceId</code> even in different JVM.
+ * 在一条链路中（Trace），无论请求分布于多少不同的进程中，这个 TraceId 都不会改变
  * <p>
  * The <code>DistributedTraceId</code> contains only one string, and can NOT be reset, creating a new instance is the
  * only option.

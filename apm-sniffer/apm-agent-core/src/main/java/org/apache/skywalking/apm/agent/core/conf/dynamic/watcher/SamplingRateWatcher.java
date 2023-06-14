@@ -25,10 +25,13 @@ import org.apache.skywalking.apm.agent.core.logging.api.ILog;
 import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.agent.core.sampling.SamplingService;
 
+/**
+ * 采样频率监听
+ */
 public class SamplingRateWatcher extends AgentConfigChangeWatcher {
     private static final ILog LOGGER = LogManager.getLogger(SamplingRateWatcher.class);
 
-    private final AtomicInteger samplingRate;
+    private final AtomicInteger samplingRate; // 每3秒能够采集的最大链路数
     private final SamplingService samplingService;
 
     public SamplingRateWatcher(final String propertyKey, SamplingService samplingService) {

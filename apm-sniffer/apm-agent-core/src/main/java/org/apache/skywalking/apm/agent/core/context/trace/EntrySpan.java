@@ -31,10 +31,14 @@ import org.apache.skywalking.apm.network.trace.component.Component;
  * But with the last <code>EntrySpan</code>'s tags and logs, which have more details about a service provider.
  * <p>
  * Such as: Tomcat Embed - Dubbox The <code>EntrySpan</code> represents the Dubbox span.
+ *
+ * 1、在一个 TraceSegment 里面只能存在一个 EntrySpan
+ * 2、后面的插件复用前面插件创建的 EntrySpan 时会覆盖掉前面插件设置的 Span 信息
+ * 3、EntrySpan 记录的信息永远是最靠近服务提供侧的信息
  */
 public class EntrySpan extends StackBasedTracingSpan {
 
-    private int currentMaxDepth;
+    private int currentMaxDepth; // 最大栈深
 
     public EntrySpan(int spanId, int parentSpanId, String operationName, TracingContext owner) {
         super(spanId, parentSpanId, operationName, owner);
@@ -43,6 +47,8 @@ public class EntrySpan extends StackBasedTracingSpan {
 
     /**
      * Set the {@link #startTime}, when the first start, which means the first service provided.
+     * EntrySpan 只会由第一个插件创建，但是后面的插件复用 EntrySpan 时都要来调用一次 start() 方法
+     * 因为每一个插件都以为自己是第一个创建 EntrySpan 的
      */
     @Override
     public EntrySpan start() {

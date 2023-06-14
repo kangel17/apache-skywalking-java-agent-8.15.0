@@ -36,6 +36,7 @@ import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.util.RunnableWithExceptionProtection;
 
 /**
+ * 采样服务
  * The <code>SamplingService</code> take charge of how to sample the {@link TraceSegment}. Every {@link TraceSegment}s
  * have been traced, but, considering CPU cost of serialization/deserialization, and network bandwidth, the agent do NOT
  * send all of them to collector, if SAMPLING is on.
@@ -46,11 +47,11 @@ import org.apache.skywalking.apm.util.RunnableWithExceptionProtection;
 public class SamplingService implements BootService {
     private static final ILog LOGGER = LogManager.getLogger(SamplingService.class);
 
-    private volatile boolean on = false;
-    private volatile AtomicInteger samplingFactorHolder;
-    private volatile ScheduledFuture<?> scheduledFuture;
+    private volatile boolean on = false; // 采样是否在运行
+    private volatile AtomicInteger samplingFactorHolder; // 累计3秒内已经采样的次数
+    private volatile ScheduledFuture<?> scheduledFuture; // 每3秒重置一次 samplingFactorHolder
 
-    private SamplingRateWatcher samplingRateWatcher;
+    private SamplingRateWatcher samplingRateWatcher; // 采样配置监听
     private ScheduledExecutorService service;
 
     @Override
@@ -81,6 +82,7 @@ public class SamplingService implements BootService {
     }
 
     /**
+     * 如果采样机制没有开启，即 on = false，那么就表示每一条采集到的链路都会上报给 OAP
      * When the sampling mechanism is on and the sample limited is not reached, the trace segment
      * should be traced. If the sampling mechanism is off, it means that all trace segments should
      * be traced.

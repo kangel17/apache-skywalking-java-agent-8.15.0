@@ -31,6 +31,7 @@ import org.apache.skywalking.apm.util.StringUtil;
 
 /**
  * Active authentication header by Config.Agent.AUTHENTICATION
+ * 请求头中附加token认证信息
  */
 public class AuthenticationDecorator implements ChannelDecorator {
     private static final Metadata.Key<String> AUTH_HEAD_HEADER_NAME = Metadata.Key.of("Authentication", Metadata.ASCII_STRING_MARSHALLER);
@@ -48,6 +49,7 @@ public class AuthenticationDecorator implements ChannelDecorator {
                 return new ForwardingClientCall.SimpleForwardingClientCall<REQ, RESP>(channel.newCall(method, options)) {
                     @Override
                     public void start(Listener<RESP> responseListener, Metadata headers) {
+                        // 请求头中附加token认证信息
                         headers.put(AUTH_HEAD_HEADER_NAME, Config.Agent.AUTHENTICATION);
 
                         super.start(responseListener, headers);

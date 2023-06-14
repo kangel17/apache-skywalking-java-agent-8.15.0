@@ -44,9 +44,12 @@ public class TLSChannelBuilder implements ChannelBuilder<NettyChannelBuilder> {
     public NettyChannelBuilder build(
         NettyChannelBuilder managedChannelBuilder) throws AgentPackageNotFoundException, IOException {
 
+        // ca 认证
+        // 获取 ca 证书
         File caFile = new File(AgentPackagePath.getPath(), Config.Agent.SSL_TRUSTED_CA_PATH);
         boolean isCAFileExist = caFile.exists() && caFile.isFile();
         if (Config.Agent.FORCE_TLS || isCAFileExist) {
+            // ca 认证
             SslContextBuilder builder = GrpcSslContexts.forClient();
 
             if (isCAFileExist) {

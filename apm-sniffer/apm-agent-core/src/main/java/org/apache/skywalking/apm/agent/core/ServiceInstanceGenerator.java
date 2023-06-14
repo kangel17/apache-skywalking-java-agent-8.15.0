@@ -26,6 +26,9 @@ import org.apache.skywalking.apm.agent.core.os.OSUtil;
 
 import static org.apache.skywalking.apm.util.StringUtil.isEmpty;
 
+/**
+ * 生成默认的服务实例名称
+ */
 @Getter
 public class ServiceInstanceGenerator implements BootService {
     @Override

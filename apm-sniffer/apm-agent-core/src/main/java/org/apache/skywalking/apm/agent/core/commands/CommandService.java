@@ -34,17 +34,22 @@ import org.apache.skywalking.apm.network.trace.component.command.CommandDeserial
 import org.apache.skywalking.apm.network.trace.component.command.UnsupportedCommandException;
 import org.apache.skywalking.apm.util.RunnableWithExceptionProtection;
 
+/**
+ * Command Service 命令的调度器
+ *
+ * 收集 OAP 返回的 Commands，然后分发给不同的处理器去处理
+ */
 @DefaultImplementor
 public class CommandService implements BootService, Runnable {
 
     private static final ILog LOGGER = LogManager.getLogger(CommandService.class);
 
-    private volatile boolean isRunning = true;
+    private volatile boolean isRunning = true; // 命令的处理流程是否在运行
     private ExecutorService executorService = Executors.newSingleThreadExecutor(
         new DefaultNamedThreadFactory("CommandService")
     );
-    private LinkedBlockingQueue<BaseCommand> commands = new LinkedBlockingQueue<>(64);
-    private CommandSerialNumberCache serialNumberCache = new CommandSerialNumberCache();
+    private LinkedBlockingQueue<BaseCommand> commands = new LinkedBlockingQueue<>(64); // 待处理的命令列表
+    private CommandSerialNumberCache serialNumberCache = new CommandSerialNumberCache(); // 命令的序列号缓存
 
     @Override
     public void prepare() throws Throwable {
@@ -57,6 +62,9 @@ public class CommandService implements BootService, Runnable {
         );
     }
 
+    /**
+     * 不断从命令队列（任务队列）里取出任务，交给执行器执行
+     */
     @Override
     public void run() {
         final CommandExecutorService commandExecutorService = ServiceManager.INSTANCE.findService(CommandExecutorService.class);
@@ -64,11 +72,11 @@ public class CommandService implements BootService, Runnable {
         while (isRunning) {
             try {
                 BaseCommand command = commands.take();
-
+                // 命令是否已执行
                 if (isCommandExecuted(command)) {
                     continue;
                 }
-
+                // 执行命令
                 commandExecutorService.execute(command);
                 serialNumberCache.add(command.getSerialNumber());
             } catch (CommandExecutionException e) {

@@ -25,6 +25,14 @@ public abstract class AbstractTag<T> {
 
     private int id;
 
+    /**
+     * 是否可以覆盖
+     * 原值：a -> 1
+     * 可以修改 canOverwrite = true
+     * 修改后：a -> 2
+     * 不可以修改 canOverwrite = false
+     * 保留原值 a -> 1
+     */
     private boolean canOverwrite;
     /**
      * The key of this Tag.

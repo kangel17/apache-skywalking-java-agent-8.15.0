@@ -48,6 +48,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     protected int spanId;
     /**
      * Parent span id starts from 0. -1 means no parent span.
+     * 记录上一个 Span 的 id，第一个 Span 的该值为 -1
      */
     protected int parentSpanId;
     protected List<TagValuePair> tags;
@@ -55,15 +56,18 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
     protected SpanLayer layer;
     /**
      * The span has been tagged in async mode, required async stop to finish.
+     * 表示当前异步操作是否已经开始
      */
     protected volatile boolean isInAsyncMode = false;
     /**
      * The flag represents whether the span has been async stopped
+     * 表示当前异步操作是否已经结束
      */
     private volatile boolean isAsyncStopped = false;
 
     /**
      * The context to which the span belongs
+     * 当前链路 Segment 和 span 的上下文
      */
     protected final TracingContext owner;
 
@@ -91,6 +95,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
      * The refs of parent trace segments, except the primary one. For most RPC call, {@link #refs} contains only one
      * element, but if this segment is a start span of batch process, the segment faces multi parents, at this moment,
      * we use this {@link #refs} to link them.
+     * 用于当前 Span 指定自己所在的 Segment 的前一个 Segment，除非这个 Span 所在的 Segment 是整条链路上的第一个 Segment
      */
     protected List<TraceSegmentRef> refs;
 
@@ -318,6 +323,7 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
         if (isInAsyncMode) {
             throw new RuntimeException("Prepare for async repeatedly. Span is already in async mode.");
         }
+        // 等待异步任务完成
         ContextManager.awaitFinishAsync(this);
         isInAsyncMode = true;
         return this;

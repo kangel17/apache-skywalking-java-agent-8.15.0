@@ -34,11 +34,11 @@ import org.apache.skywalking.apm.network.language.agent.v3.SegmentReference;
 public class TraceSegmentRef {
     private SegmentRefType type;
     private String traceId;
-    private String traceSegmentId;
+    private String traceSegmentId; // parent
     private int spanId;
     private String parentService;
-    private String parentServiceInstance;
-    private String parentEndpoint;
+    private String parentServiceInstance; // parentService 的具体一个实例
+    private String parentEndpoint; // 进入 parentService 的那个请求
     private String addressUsedAtClient;
 
     /**
@@ -67,6 +67,10 @@ public class TraceSegmentRef {
         this.parentEndpoint = snapshot.getParentEndpoint();
     }
 
+    /**
+     * 把 Java 对象序列化为 Protobuf 对象
+     * @return
+     */
     public SegmentReference transform() {
         SegmentReference.Builder refBuilder = SegmentReference.newBuilder();
         if (SegmentRefType.CROSS_PROCESS.equals(type)) {
@@ -109,6 +113,9 @@ public class TraceSegmentRef {
     }
 
     public enum SegmentRefType {
-        CROSS_PROCESS, CROSS_THREAD
+        // 跨进程
+        CROSS_PROCESS,
+        // 跨线程
+        CROSS_THREAD
     }
 }

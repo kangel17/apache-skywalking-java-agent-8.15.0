@@ -31,12 +31,18 @@ import java.util.List;
 public class GRPCChannel {
     /**
      * origin channel
+     * 原始 channel
+     * originChannel、channelWithDecorators 是同一个连接
      */
     private final ManagedChannel originChannel;
+    /**
+     * 装饰器装饰后的 channel
+     */
     private final Channel channelWithDecorators;
 
     private GRPCChannel(String host, int port, List<ChannelBuilder> channelBuilders,
                         List<ChannelDecorator> decorators) throws Exception {
+        // 通过netty建立连接
         ManagedChannelBuilder channelBuilder = NettyChannelBuilder.forAddress(host, port);
 
         NameResolverRegistry.getDefaultRegistry().register(new DnsNameResolverProvider());

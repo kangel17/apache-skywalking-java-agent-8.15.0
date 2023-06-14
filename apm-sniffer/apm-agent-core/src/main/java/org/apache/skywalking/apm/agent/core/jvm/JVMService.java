@@ -45,9 +45,9 @@ import org.apache.skywalking.apm.util.RunnableWithExceptionProtection;
 @DefaultImplementor
 public class JVMService implements BootService, Runnable {
     private static final ILog LOGGER = LogManager.getLogger(JVMService.class);
-    private volatile ScheduledFuture<?> collectMetricFuture;
-    private volatile ScheduledFuture<?> sendMetricFuture;
-    private JVMMetricsSender sender;
+    private volatile ScheduledFuture<?> collectMetricFuture; // 收集 JVM 信息的定时任务
+    private volatile ScheduledFuture<?> sendMetricFuture; // 发送 JVM 信息的定时任务
+    private JVMMetricsSender sender; // JVM 信息的发送工具
     private volatile double cpuUsagePercent;
 
     @Override
@@ -100,7 +100,7 @@ public class JVMService implements BootService, Runnable {
             jvmBuilder.setTime(currentTimeMillis);
             jvmBuilder.setCpu(CPUProvider.INSTANCE.getCpuMetric());
             jvmBuilder.addAllMemory(MemoryProvider.INSTANCE.getMemoryMetricList());
-            jvmBuilder.addAllMemoryPool(MemoryPoolProvider.INSTANCE.getMemoryPoolMetricsList());
+            jvmBuilder.addAllMemoryPool(MemoryPoolProvider.INSTANCE.getMemoryPoolMetricsList()); // 内存池
             jvmBuilder.addAllGc(GCProvider.INSTANCE.getGCList());
             jvmBuilder.setThread(ThreadProvider.INSTANCE.getThreadMetrics());
             jvmBuilder.setClazz(ClassProvider.INSTANCE.getClassMetrics());

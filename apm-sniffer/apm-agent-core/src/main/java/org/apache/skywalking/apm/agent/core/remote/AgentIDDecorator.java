@@ -30,8 +30,12 @@ import org.apache.skywalking.apm.agent.core.conf.Config;
 
 /**
  * Add agent version(Described in MANIFEST.MF) to the connection establish stage.
+ * 请求头里附加 agent版本号
  */
 public class AgentIDDecorator implements ChannelDecorator {
+    /**
+     * agent 版本号
+     */
     private static final Metadata.Key<String> AGENT_VERSION_HEAD_HEADER_NAME = Metadata.Key.of("Agent-Version", Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
@@ -43,6 +47,7 @@ public class AgentIDDecorator implements ChannelDecorator {
                 return new ForwardingClientCall.SimpleForwardingClientCall<REQ, RESP>(channel.newCall(method, options)) {
                     @Override
                     public void start(Listener<RESP> responseListener, Metadata headers) {
+                        // 请求头中添加 agent 版本号
                         headers.put(AGENT_VERSION_HEAD_HEADER_NAME, Config.Agent.VERSION);
 
                         super.start(responseListener, headers);

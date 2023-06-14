@@ -21,9 +21,13 @@ package org.apache.skywalking.apm.agent.core.conf.dynamic;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 监听agent的某项配置的值的变化
+ */
 @Getter
 public abstract class AgentConfigChangeWatcher {
     // Config key, should match KEY in the Table of Agent Configuration Properties.
+    // 这个 key 来源于 agent 配置文件，也就是说只有 agent 配置文件中合法的 key 才能在这里被使用
     private final String propertyKey;
 
     public AgentConfigChangeWatcher(String propertyKey) {

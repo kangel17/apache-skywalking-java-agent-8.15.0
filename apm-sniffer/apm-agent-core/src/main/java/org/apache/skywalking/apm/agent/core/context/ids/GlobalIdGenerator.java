@@ -22,6 +22,10 @@ import java.util.UUID;
 
 import org.apache.skywalking.apm.util.StringUtil;
 
+/**
+ * 生成唯一 ID
+ * TraceId  SegmentId
+ */
 public final class GlobalIdGenerator {
     private static final String PROCESS_ID = UUID.randomUUID().toString().replaceAll("-", "");
     private static final ThreadLocal<IDContext> THREAD_ID_SEQUENCE = ThreadLocal.withInitial(
@@ -34,12 +38,14 @@ public final class GlobalIdGenerator {
      * Generate a new id, combined by three parts.
      * <p>
      * The first one represents application instance id.
+     * 应用实例 id
      * <p>
      * The second one represents thread id.
+     * 线程 id
      * <p>
      * The third one also has two parts, 1) a timestamp, measured in milliseconds 2) a seq, in current thread, between
      * 0(included) and 9999(included)
-     *
+     * 1）时间戳 2）当前线程里的序列号（0 - 9999）
      * @return unique id to represent a trace or segment
      */
     public static String generate() {
@@ -52,10 +58,13 @@ public final class GlobalIdGenerator {
     }
 
     private static class IDContext {
+        // 上次生产 sequence 的时间戳
         private long lastTimestamp;
+        // 线程的序列号
         private short threadSeq;
 
         // Just for considering time-shift-back only.
+        // 时间回拨
         private long lastShiftTimestamp;
         private int lastShiftValue;
 
@@ -71,14 +80,14 @@ public final class GlobalIdGenerator {
         private long timestamp() {
             long currentTimeMillis = System.currentTimeMillis();
 
-            if (currentTimeMillis < lastTimestamp) {
+            if (currentTimeMillis < lastTimestamp) { // 发生了时间回拨
                 // Just for considering time-shift-back by Ops or OS. @hanahmily 's suggestion.
                 if (lastShiftTimestamp != currentTimeMillis) {
                     lastShiftValue++;
                     lastShiftTimestamp = currentTimeMillis;
                 }
                 return lastShiftValue;
-            } else {
+            } else { // 时间正常
                 lastTimestamp = currentTimeMillis;
                 return lastTimestamp;
             }

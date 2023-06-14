@@ -44,20 +44,27 @@ import org.apache.skywalking.apm.util.RunnableWithExceptionProtection;
 
 import static org.apache.skywalking.apm.agent.core.conf.Config.Collector.GRPC_UPSTREAM_TIMEOUT;
 
+/**
+ * 自报家门/打招呼
+ * 1、将当前 Agent Client 的基本信息汇报给 OAP
+ * 2、和 OAP 保持心跳
+ */
 @DefaultImplementor
 public class ServiceManagementClient implements BootService, Runnable, GRPCChannelListener {
     private static final ILog LOGGER = LogManager.getLogger(ServiceManagementClient.class);
-    private static List<KeyStringValuePair> SERVICE_INSTANCE_PROPERTIES;
+    private static List<KeyStringValuePair> SERVICE_INSTANCE_PROPERTIES;  // Agent Client 信息
 
-    private volatile GRPCChannelStatus status = GRPCChannelStatus.DISCONNECT;
-    private volatile ManagementServiceGrpc.ManagementServiceBlockingStub managementServiceBlockingStub;
-    private volatile ScheduledFuture<?> heartbeatFuture;
-    private volatile AtomicInteger sendPropertiesCounter = new AtomicInteger(0);
+    private volatile GRPCChannelStatus status = GRPCChannelStatus.DISCONNECT; // 当前网络连接状态
+    private volatile ManagementServiceGrpc.ManagementServiceBlockingStub managementServiceBlockingStub; // 网络服务
+    private volatile ScheduledFuture<?> heartbeatFuture; // 心跳定时任务
+    private volatile AtomicInteger sendPropertiesCounter = new AtomicInteger(0); // Agent Client 信息发送次数计数器
 
     @Override
     public void statusChanged(GRPCChannelStatus status) {
         if (GRPCChannelStatus.CONNECTED.equals(status)) {
+            // 找到 GRPCChannelManager 服务，拿到网络连接
             Channel channel = ServiceManager.INSTANCE.findService(GRPCChannelManager.class).getChannel();
+            // grpc 的 stub 可以理解为 protobuf 中定义的 XxxService
             managementServiceBlockingStub = ManagementServiceGrpc.newBlockingStub(channel);
         } else {
             managementServiceBlockingStub = null;
@@ -68,7 +75,7 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
     @Override
     public void prepare() {
         ServiceManager.INSTANCE.findService(GRPCChannelManager.class).addChannelListener(this);
-
+        // 把配置文件中的 Agent Client 信息放入集合，等待发送
         SERVICE_INSTANCE_PROPERTIES = InstanceJsonPropertiesUtil.parseProperties();
     }
 
@@ -101,15 +108,18 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
         if (GRPCChannelStatus.CONNECTED.equals(status)) {
             try {
                 if (managementServiceBlockingStub != null) {
+                    // 心跳周期 = 30s，信息汇报频率因子 = 10 => 每 5 分钟向 OAP 汇报一次 Agent Client Properties
+                    // Round 1. counter = 0  0%10 = 0
+                    // Round 2. counter = 1  1%10 = 1
                     if (Math.abs(
                         sendPropertiesCounter.getAndAdd(1)) % Config.Collector.PROPERTIES_REPORT_PERIOD_FACTOR == 0) {
 
                         managementServiceBlockingStub
-                            .withDeadlineAfter(GRPC_UPSTREAM_TIMEOUT, TimeUnit.SECONDS)
+                            .withDeadlineAfter(GRPC_UPSTREAM_TIMEOUT, TimeUnit.SECONDS) // 超时时间 30s
                             .reportInstanceProperties(InstanceProperties.newBuilder()
                                                                         .setService(Config.Agent.SERVICE_NAME)
                                                                         .setServiceInstance(Config.Agent.INSTANCE_NAME)
-                                                                        .addAllProperties(OSUtil.buildOSInfo(
+                                                                         .addAllProperties(OSUtil.buildOSInfo(
                                                                             Config.OsInfo.IPV4_LIST_SIZE))
                                                                         .addAllProperties(SERVICE_INSTANCE_PROPERTIES)
                                                                         .addAllProperties(
