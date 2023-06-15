@@ -27,6 +27,7 @@ public class ConsumerThread<T> extends Thread {
     private volatile boolean running;
     private IConsumer<T> consumer;
     private List<DataSource> dataSources;
+    // 本次消费没有取到数据时，线程 sleep 的时间
     private long consumeCycle;
 
     ConsumerThread(String threadName, IConsumer<T> consumer, long consumeCycle) {

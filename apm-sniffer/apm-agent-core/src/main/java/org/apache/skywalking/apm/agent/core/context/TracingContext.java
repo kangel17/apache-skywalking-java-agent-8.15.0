@@ -57,6 +57,10 @@ import static org.apache.skywalking.apm.agent.core.conf.Config.Agent.CLUSTER;
  * In skywalking core concept, FOLLOW_OF is an abstract concept when cross-process MQ or cross-thread async/batch tasks
  * happen, we used {@link TraceSegmentRef} for these scenarios. Check {@link TraceSegmentRef} which is from {@link
  * ContextCarrier} or {@link ContextSnapshot}.
+ *
+ * TracingContext 管理
+ *      当前 Segment 和自己前后的 Segment 的引用 TraceSegmentRef
+ *      当前 Segment 内的所有 span
  */
 public class TracingContext implements AbstractTracerContext {
     private static final ILog LOGGER = LogManager.getLogger(TracingContext.class);
@@ -86,6 +90,7 @@ public class TracingContext implements AbstractTracerContext {
 
     /**
      * A counter for the next span.
+     * span id 生产器
      */
     private int spanIdGenerator;
 
@@ -99,8 +104,10 @@ public class TracingContext implements AbstractTracerContext {
     private volatile boolean isRunningInAsyncMode;
     private volatile ReentrantLock asyncFinishLock;
 
+    // 表示的是 当前 TracingContext 是否在运行
     private volatile boolean running;
 
+    // 当前 TracingContext 的创建时间
     private final long createTime;
 
     /**
@@ -273,11 +280,14 @@ public class TracingContext implements AbstractTracerContext {
     public AbstractSpan createEntrySpan(final String operationName) {
         if (isLimitMechanismWorking()) {
             NoopSpan span = new NoopSpan();
+            // 入栈
             return push(span);
         }
         AbstractSpan entrySpan;
         TracingContext owner = this;
+        // 弹出一个 Span 作为当前要创建的这个 Span 的 Parent
         final AbstractSpan parentSpan = peek();
+        // 拿到 parent Span 的id。如果 parent 不存在，则 parentSpanId = -1
         final int parentSpanId = parentSpan == null ? -1 : parentSpan.getSpanId();
         if (parentSpan != null && parentSpan.isEntry()) {
             /*
@@ -555,6 +565,10 @@ public class TracingContext implements AbstractTracerContext {
         return activeSpanStack.getLast();
     }
 
+    /**
+     *
+     * @return true 表示不允许再创建更多的 Span    false 相反
+     */
     private boolean isLimitMechanismWorking() {
         if (spanIdGenerator >= spanLimitWatcher.getSpanLimit()) {
             long currentTimeMillis = System.currentTimeMillis();

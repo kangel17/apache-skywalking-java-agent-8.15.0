@@ -33,6 +33,14 @@ import org.apache.skywalking.apm.network.trace.component.Component;
  * <p>
  * Such as: Dubbox - Apache Httpcomponent - ...(Remote) The <code>ExitSpan</code> represents the Dubbox span, and ignore
  * the httpcomponent span's info.
+ *
+ * 区别就在于    EntrySpan 记录的是更靠近服务这一侧的信息
+ *              ExitSpan 记录的是更靠近消费这一侧的信息
+ *
+ * 1、所谓 ExitSpan 和 EntrySpan 一样采用复用的机制，前提是在插件嵌套的情况下
+ * 2、多个 ExitSpan 不存在嵌套关系，是平行存在的时候，是运行同时存在多个 ExitSpan
+ * 3、把 ExitSpan 简单理解为离开当前进程/线程的操作
+ * 4、TraceSegment 里不一定非要有 ExitSpan
  */
 public class ExitSpan extends StackBasedTracingSpan implements ExitTypeSpan {
 

@@ -142,6 +142,7 @@ public class SkyWalkingAgent {
                     .with(new Listener())
                     .installOn(instrumentation);
 
+        // 插件初始化完成
         PluginFinder.pluginInitCompleted();
 
         try {

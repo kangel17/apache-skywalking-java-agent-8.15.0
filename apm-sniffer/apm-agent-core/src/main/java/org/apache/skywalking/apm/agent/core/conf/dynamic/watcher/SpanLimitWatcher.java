@@ -24,6 +24,9 @@ import org.apache.skywalking.apm.agent.core.conf.dynamic.AgentConfigChangeWatche
 import org.apache.skywalking.apm.agent.core.logging.api.ILog;
 import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 
+/**
+ * 每个 Segment 里可以放多少个 Span 配置项的监听器
+ */
 public class SpanLimitWatcher extends AgentConfigChangeWatcher {
     private static final ILog LOGGER = LogManager.getLogger(SpanLimitWatcher.class);
 

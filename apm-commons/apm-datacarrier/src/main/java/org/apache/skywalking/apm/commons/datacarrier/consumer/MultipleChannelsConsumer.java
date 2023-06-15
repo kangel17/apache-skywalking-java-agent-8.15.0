@@ -31,6 +31,7 @@ public class MultipleChannelsConsumer extends Thread {
     private volatile boolean running;
     private volatile ArrayList<Group> consumeTargets;
     @SuppressWarnings("NonAtomicVolatileUpdate")
+    // buffer 总数
     private volatile long size;
     private final long consumeCycle;
 
@@ -113,6 +114,7 @@ public class MultipleChannelsConsumer extends Thread {
     }
 
     private static class Group {
+        // 多个 Buffer
         private Channels channels;
         private IConsumer consumer;
 

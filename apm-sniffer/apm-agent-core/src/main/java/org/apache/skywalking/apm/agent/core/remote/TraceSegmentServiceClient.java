@@ -44,12 +44,18 @@ import static org.apache.skywalking.apm.agent.core.conf.Config.Buffer.BUFFER_SIZ
 import static org.apache.skywalking.apm.agent.core.conf.Config.Buffer.CHANNEL_SIZE;
 import static org.apache.skywalking.apm.agent.core.remote.GRPCChannelStatus.CONNECTED;
 
+/**
+ * 将 TraceSegment 发送到 OAP
+ */
 @DefaultImplementor
 public class TraceSegmentServiceClient implements BootService, IConsumer<TraceSegment>, TracingContextListener, GRPCChannelListener {
     private static final ILog LOGGER = LogManager.getLogger(TraceSegmentServiceClient.class);
 
+    // 上一次打印传输 TraceSegment 情况的日志的时间
     private long lastLogTime;
+    // 成功发送的 TraceSegment 数量
     private long segmentUplinkedCounter;
+    // 因网络原因丢弃的 TraceSegment 数量
     private long segmentAbandonedCounter;
     private volatile DataCarrier<TraceSegment> carrier;
     private volatile TraceSegmentReportServiceGrpc.TraceSegmentReportServiceStub serviceStub;
@@ -130,6 +136,7 @@ public class TraceSegmentServiceClient implements BootService, IConsumer<TraceSe
 
             upstreamSegmentStreamObserver.onCompleted();
 
+            // 强制等待所有的 TraceSegment 都发送完成
             status.wait4Finish();
             segmentUplinkedCounter += data.size();
         } else {

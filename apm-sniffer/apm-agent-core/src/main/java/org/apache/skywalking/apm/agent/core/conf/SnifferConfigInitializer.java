@@ -98,7 +98,7 @@ public class SnifferConfigInitializer {
             try {
                 agentOptions = agentOptions.trim();
                 LOGGER.info("Agent options is {}.", agentOptions);
-
+                // 解析 agentOptions后，遍历参数并存放到 AGENT_SETTINGS
                 overrideConfigByAgentOptions(agentOptions);
             } catch (Exception e) {
                 LOGGER.error(e, "Failed to parse the agent options, val is {}.", agentOptions);
