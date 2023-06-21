@@ -71,6 +71,7 @@ public class TraceSegmentServiceClient implements BootService, IConsumer<TraceSe
         lastLogTime = System.currentTimeMillis();
         segmentUplinkedCounter = 0;
         segmentAbandonedCounter = 0;
+        // 创建数据缓存
         carrier = new DataCarrier<>(CHANNEL_SIZE, BUFFER_SIZE, BufferStrategy.IF_POSSIBLE);
         carrier.consume(this, 1);
     }
@@ -127,6 +128,7 @@ public class TraceSegmentServiceClient implements BootService, IConsumer<TraceSe
 
             try {
                 for (TraceSegment segment : data) {
+                    // 将 segment 对象转成 Protobuf对象
                     SegmentObject upstreamSegment = segment.transform();
                     upstreamSegmentStreamObserver.onNext(upstreamSegment);
                 }
@@ -138,14 +140,19 @@ public class TraceSegmentServiceClient implements BootService, IConsumer<TraceSe
 
             // 强制等待所有的 TraceSegment 都发送完成
             status.wait4Finish();
+            // 上报的数量
             segmentUplinkedCounter += data.size();
         } else {
+            // 被抛弃的数量
             segmentAbandonedCounter += data.size();
         }
 
         printUplinkStatus();
     }
 
+    /**
+     * 距离上次上报，时间大于30秒时，重置lastLogTime、segmentUplinkedCounter、segmentAbandonedCounter并打印debug信息
+     */
     private void printUplinkStatus() {
         long currentTimeMillis = System.currentTimeMillis();
         if (currentTimeMillis - lastLogTime > 30 * 1000) {

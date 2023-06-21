@@ -29,11 +29,16 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 插件配置
+ */
 public enum PluginCfg {
     INSTANCE;
 
     private static final ILog LOGGER = LogManager.getLogger(PluginCfg.class);
-
+    /**
+     * 可用的所有插件
+     */
     private List<PluginDefine> pluginClassList = new ArrayList<PluginDefine>();
     private PluginSelector pluginSelector = new PluginSelector();
 
@@ -46,7 +51,7 @@ public enum PluginCfg {
                     if (pluginDefine.trim().length() == 0 || pluginDefine.startsWith("#")) {
                         continue;
                     }
-                    // skywalking-plugin.def转换为PluginDefine对象
+                    // skywalking-plugin.def 转换为 PluginDefine 对象
                     PluginDefine plugin = PluginDefine.build(pluginDefine);
                     pluginClassList.add(plugin);
                 } catch (IllegalPluginDefineException e) {

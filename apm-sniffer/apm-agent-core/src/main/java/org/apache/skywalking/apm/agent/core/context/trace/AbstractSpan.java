@@ -68,11 +68,15 @@ public interface AbstractSpan extends AsyncSpan {
     AbstractSpan errorOccurred();
 
     /**
+     * 是否是 EntrySpan
+     *
      * @return true if the actual span is an entry span.
      */
     boolean isEntry();
 
     /**
+     * 是否是 ExitSpan
+     *
      * @return true if the actual span is an exit span.
      */
     boolean isExit();
@@ -99,14 +103,14 @@ public interface AbstractSpan extends AsyncSpan {
 
     /**
      * Start a span.
-     *
+     * 开始 span
      * @return this Span instance, for chaining
      */
     AbstractSpan start();
 
     /**
      * Get the id of span
-     *
+     * 获取 span 的 id
      * @return id value.
      */
     int getSpanId();
@@ -132,12 +136,14 @@ public interface AbstractSpan extends AsyncSpan {
     AbstractSpan setPeer(String remotePeer);
 
     /**
+     * 是否是性能剖析
      * @return true if the span's owner(tracing context main thread) is been profiled.
      */
     boolean isProfiling();
 
     /**
      * Should skip analysis in the backend.
+     * 不进行分析
      */
     void skipAnalysis();
 }

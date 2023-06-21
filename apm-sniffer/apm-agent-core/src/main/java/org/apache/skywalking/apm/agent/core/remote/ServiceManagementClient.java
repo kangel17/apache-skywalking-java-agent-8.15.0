@@ -74,6 +74,7 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
 
     @Override
     public void prepare() {
+        // 将自身添加到 Channel 监听器里
         ServiceManager.INSTANCE.findService(GRPCChannelManager.class).addChannelListener(this);
         // 把配置文件中的 Agent Client 信息放入集合，等待发送
         SERVICE_INSTANCE_PROPERTIES = InstanceJsonPropertiesUtil.parseProperties();
@@ -81,6 +82,7 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
 
     @Override
     public void boot() {
+        // 心跳
         heartbeatFuture = Executors.newSingleThreadScheduledExecutor(
             new DefaultNamedThreadFactory("ServiceManagementClient")
         ).scheduleAtFixedRate(
@@ -98,6 +100,7 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
 
     @Override
     public void shutdown() {
+        // 取消心跳
         heartbeatFuture.cancel(true);
     }
 

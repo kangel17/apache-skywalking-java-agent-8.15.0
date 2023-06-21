@@ -88,6 +88,7 @@ public class KafkaTraceSegmentServiceClient implements BootService, IConsumer<Tr
             return;
         }
         data.forEach(traceSegment -> {
+            // 将 segment 对象转成 Protobuf对象
             SegmentObject upstreamSegment = traceSegment.transform();
             ProducerRecord<String, Bytes> record = new ProducerRecord<>(
                 topic,

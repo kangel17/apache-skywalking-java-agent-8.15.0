@@ -70,6 +70,7 @@ public class TraceSegment {
 
     /**
      * Create a default/empty trace segment, with current time as start time, and generate a new segment id.
+     * 创建默认的trace segment，当前时间作为开始时间，并生成一个新的 traceSegmentId
      */
     public TraceSegment() {
         this.traceSegmentId = GlobalIdGenerator.generate();
@@ -143,6 +144,7 @@ public class TraceSegment {
 
     /**
      * This is a high CPU cost method, only called when sending to collector or test cases.
+     * 将 segment 对象转成 Protobuf对象
      *
      * @return the segment as GRPC service parameter
      */

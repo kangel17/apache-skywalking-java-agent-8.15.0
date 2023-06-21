@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class AtomicRangeInteger extends Number implements Serializable {
     private static final long serialVersionUID = -4099792402691141643L;
-    // 他是一个可以原子化操作数组某一个元素的数组封装
+    // 他是一个可以原子化操作数组的封装
     // AtomicIntegerArray.base ：获取一个 int 类型数组对象的 对象头的字节长度
     // int scale = unsafe.arrayIndexScale(int[].class); 计算指定数据类型的数组中每个元素所占用的内存空间
     // Integer.numberOfLeadingZeros(scale); 计算传入的数字在二进制表示下，从左开始有多少个连续的 0

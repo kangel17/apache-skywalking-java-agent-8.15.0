@@ -27,7 +27,9 @@ import org.apache.skywalking.apm.util.StringUtil;
  * TraceId  SegmentId
  */
 public final class GlobalIdGenerator {
+    // 进程id
     private static final String PROCESS_ID = UUID.randomUUID().toString().replaceAll("-", "");
+    // 线程id序号
     private static final ThreadLocal<IDContext> THREAD_ID_SEQUENCE = ThreadLocal.withInitial(
         () -> new IDContext(System.currentTimeMillis(), (short) 0));
 
@@ -35,6 +37,12 @@ public final class GlobalIdGenerator {
     }
 
     /**
+     * 一个新id有三部分构成
+     * 1、第一部分：应用实例 id
+     * 2、第二部分：线程id
+     * 3、第三部分：有两个部分构成
+     *      1）时间戳
+     *      2）当前线程里的序列号（0 - 9999）
      * Generate a new id, combined by three parts.
      * <p>
      * The first one represents application instance id.

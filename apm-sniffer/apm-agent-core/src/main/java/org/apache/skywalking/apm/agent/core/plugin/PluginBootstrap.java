@@ -50,7 +50,7 @@ public class PluginBootstrap {
             LOGGER.info("no plugin files (skywalking-plugin.def) found, continue to start application.");
             return new ArrayList<AbstractClassEnhancePluginDefine>();
         }
-        // 2)
+        // 2)遍历
         for (URL pluginUrl : resources) {
             try {
                 PluginCfg.INSTANCE.load(pluginUrl.openStream());
